@@ -145,5 +145,5 @@ metadata = odata_builder.generate_metadata()
 print(metadata)
 ```
 
-##License
+## License
 This project is licensed under the GNU 3 License. See the LICENSE file for details.
