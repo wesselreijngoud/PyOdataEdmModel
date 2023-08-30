@@ -1,5 +1,5 @@
 import unittest
-from EdmModel.EdmModel import ODataEdmBuilder
+from EdmModelBuilder.EdmModel import ODataEdmBuilder
 
 
 class TestODataEdmBuilder(unittest.TestCase):
