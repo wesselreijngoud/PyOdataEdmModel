@@ -89,7 +89,7 @@ def create_edm_model_from_sql_result(
     return builder
 
 
-def create_model_from_df_result(
+def create_edm_model_from_df_result(
     namespace_name: str,
     service_name: str,
     schema_name: str,
