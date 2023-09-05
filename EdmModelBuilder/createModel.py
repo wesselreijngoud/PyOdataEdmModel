@@ -5,8 +5,8 @@ from collections import defaultdict
 
 import pandas as pd
 
-from EdmModel.EdmModel import ODataEdmBuilder
-from EdmModel.odataMapper import convert_to_odata
+from EdmModel import ODataEdmBuilder
+from odataMapper import convert_to_odata
 
 
 def create_edm_model_from_sql_result(
