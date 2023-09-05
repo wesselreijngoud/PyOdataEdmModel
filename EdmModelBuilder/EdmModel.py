@@ -1,6 +1,6 @@
 # This file adheres to the "black" code formatting style.
 # More information about black: https://github.com/psf/black
-from EdmModel.primitives import primitives
+from primitives import primitives
 
 
 class ODataEdmBuilder:
