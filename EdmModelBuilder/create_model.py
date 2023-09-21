@@ -5,8 +5,10 @@ from collections import defaultdict
 
 import pandas as pd
 
-from EdmModel import ODataEdmBuilder
-from odata_mapper import convert_to_odata
+from EdmModel.EdmModel.EdmModel import ODataEdmBuilder
+from EdmModel.EdmModel.odata_mapper import OdataConverter
+
+OdataConverter = OdataConverter("sqlserver", r"EdmModel\EdmModel\template.json")
 
 
 def create_edm_model_from_sql_result(
@@ -51,7 +53,11 @@ def create_edm_model_from_sql_result(
         is_nullable = item["IS_NULLABLE"] == "YES"
         primary_key = [item["COLUMN_NAME"]] if item["IS_PK"] == 1 else []
         foreign_key_col = item["REFERENCING_COLUMN"]
-        foreign_key_ref = item["REFERENCED_TABLE"]
+        to_col_fk_ref = item["REFERENCED_COLUMN"]
+        to_tbl_fk_ref = item["REFERENCED_TABLE"]
+        max_length = item["MaxLength"]
+        precision = item["Precision"]
+        scale = item["Scale"]
         table_info.setdefault(table_name, []).append(
             (
                 column_name,
@@ -59,30 +65,51 @@ def create_edm_model_from_sql_result(
                 primary_key,
                 is_nullable,
                 foreign_key_col,
-                foreign_key_ref,
+                to_col_fk_ref,
+                to_tbl_fk_ref,
+                max_length,
+                precision,
+                scale,
             )
         )
 
     for table, columns in table_info.items():
         entity_type = builder.add_entity_type(schema, table)
-        builder.add_entity_set(container, table, f"{namespace_name}.{table}")
-
         for (
             column,
             data_type,
             primary_key,
             is_nullable,
             foreign_key_col,
-            foreign_key_ref,
+            to_col_fk_ref,
+            to_tbl_fk_ref,
+            max_length,
+            precision,
+            scale,
         ) in columns:
-            prop_data_type = convert_to_odata(data_type)
             for pk in primary_key:
                 if pk and not is_nullable:
-                    builder.add_key(entity_type, pk, prop_data_type)
-            # if foreign_key_col:
-            #     builder.add_navigation_property(entity_type, foreign_key_col, foreign_key_ref, is_nullable)
-            builder.add_property(entity_type, column, prop_data_type, is_nullable)
-
+                    builder.add_key(
+                        entity_type, pk, OdataConverter.convert_to_odata(data_type)
+                    )
+            if foreign_key_col:
+                builder.add_navigation_property(
+                    entity_type,
+                    foreign_key_col,
+                    to_col_fk_ref,
+                    to_tbl_fk_ref,
+                    is_nullable,
+                )
+            builder.add_property(
+                entity_type,
+                column,
+                OdataConverter.convert_to_odata(data_type),
+                is_nullable,
+                max_length,
+                precision,
+                scale,
+            )
+        builder.add_entity_set(container, table, f"{namespace_name}.{table}")
         builder.validate_entity_type(entity_type)
 
     builder.generate_metadata()
@@ -97,7 +124,7 @@ def create_edm_model_from_df_result(
     df: pd.DataFrame,
 ):
     """
-    Create an EDM (Entity Data Model) model based on SQL query results.
+    Create an EDM (Entity Data Model) model based on a pandas DataFrame.
 
     This function takes SQL query results in JSON format and generates an EDM model
     using the provided namespace, service name, schema name, and container name.
@@ -121,7 +148,6 @@ def create_edm_model_from_df_result(
 
     for index in range(len(df)):
         item = df.iloc[index]
-
         table_name = item.TABLE_NAME
         data_type = item.DATA_TYPE
         column_name = (
@@ -132,7 +158,11 @@ def create_edm_model_from_df_result(
         is_nullable = item.IS_NULLABLE == "YES"
         primary_key = [item.COLUMN_NAME] if item.IS_PK == 1 else []
         foreign_key_col = item.REFERENCING_COLUMN
-        foreign_key_ref = item.REFERENCED_TABLE
+        to_col_fk_ref = item.REFERENCED_COLUMN
+        to_tbl_fk_ref = item.REFERENCED_TABLE
+        max_length = item.MaxLength
+        precision = item.Precision
+        scale = item.Scale
         table_info[table_name].append(
             (
                 column_name,
@@ -140,34 +170,51 @@ def create_edm_model_from_df_result(
                 primary_key,
                 is_nullable,
                 foreign_key_col,
-                foreign_key_ref,
+                to_col_fk_ref,
+                to_tbl_fk_ref,
+                max_length,
+                precision,
+                scale,
             )
         )
 
     for table, columns in table_info.items():
         entity_type = builder.add_entity_type(schema, table)
-        builder.add_entity_set(container, table, f"{namespace_name}.{table}")
-
         for (
             column,
             data_type,
             primary_key,
             is_nullable,
             foreign_key_col,
-            foreign_key_ref,
+            to_col_fk_ref,
+            to_tbl_fk_ref,
+            max_length,
+            precision,
+            scale,
         ) in columns:
-            prop_data_type = convert_to_odata(data_type)
-
             for pk in primary_key:
                 if pk and not is_nullable:
-                    builder.add_key(entity_type, pk, prop_data_type)
-
-            # if foreign_key_col and foreign_key_ref:
-            #     builder.add_navigation_property(entity_type, foreign_key_col, foreign_key_ref, is_nullable)
-
-            builder.add_property(entity_type, column, prop_data_type, is_nullable)
-
+                    builder.add_key(
+                        entity_type, pk, OdataConverter.convert_to_odata(data_type)
+                    )
+            if foreign_key_col:
+                builder.add_navigation_property(
+                    entity_type,
+                    foreign_key_col,
+                    to_col_fk_ref,
+                    to_tbl_fk_ref,
+                    is_nullable,
+                )
+            builder.add_property(
+                entity_type,
+                column,
+                OdataConverter.convert_to_odata(data_type),
+                is_nullable,
+                max_length,
+                precision,
+                scale,
+            )
+        builder.add_entity_set(container, table, f"{namespace_name}.{table}")
         builder.validate_entity_type(entity_type)
-
     builder.generate_metadata()
     return builder

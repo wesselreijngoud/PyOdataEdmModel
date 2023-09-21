@@ -1,44 +1,47 @@
 # This file adheres to the "black" code formatting style.
 # More information about black: https://github.com/psf/black
-template = {
-    "int": "Edm.Int32",
-    "bigint": "Edm.Int64",
-    "smallint": "Edm.Int16",
-    "tinyint": "Edm.Byte",
-    "bit": "Edm.Boolean",
-    "float": "Edm.Double",
-    "real": "Edm.Single",
-    "decimal": "Edm.Decimal",
-    "numeric": "Edm.Decimal",
-    "money": "Edm.Decimal",
-    "smallmoney": "Edm.Decimal",
-    "datetime": "Edm.DateTimeOffset",
-    "smalldatetime": "Edm.DateTimeOffset",
-    "date": "Edm.Date",
-    "time": "Edm.TimeOfDay",
-    "char": "Edm.String",
-    "varchar": "Edm.String",
-    "text": "Edm.String",
-    "nchar": "Edm.String",
-    "nvarchar": "Edm.String",
-    "ntext": "Edm.String",
-    "binary": "Edm.Binary",
-    "varbinary": "Edm.Binary",
-    "image": "Edm.Binary",
-    "uniqueidentifier": "Edm.Guid"
-}
+import json
 
 
-def convert_to_odata(data_type: str) -> str:
-    """
-    Takes a SQL Server data type as input, converts it to lowercase,
-    and looks up the corresponding OData data type in the mapping dictionary.
-    If no mapping is found, it defaults to 'Edm.String'.
+class OdataConverter:
+    def __init__(self, database_client: str, file_path: str):
+        """
+        Initialize an OdataConverter instance.
 
-    Args:
-        sql_data_type (str): sql server datatype
+        Parameters:
+            database_client (str): The name of the database client (e.g., "SQL Server").
+            file_path (str): The path to the JSON file containing data type templates.
+        """
+        self.file_path = file_path
+        self.database_client = database_client
+        self.load_json_data()
 
-    Returns:
-        str: corresponding odata datatype (returns Edm.String if no match found)
-    """
-    return template.get(data_type.lower(), 'Edm.String')
+    def load_json_data(self):
+        """
+        Load JSON data from the specified file and validate the presence of the
+        specified database client's data types.
+
+        Raises:
+            ValueError: If the database client is not present in the JSON data.
+        """
+        with open(self.file_path, "r") as file:
+            json_data = json.load(file)
+            if self.database_client not in json_data:
+                raise ValueError(
+                    """Database client not yet present in data type template,
+                    please add it manually."""
+                )
+            else:
+                self.json_data = json_data[self.database_client]
+
+    def convert_to_odata(self, data_type: str) -> str:
+        """
+        Convert a database-specific data type to its OData equivalent.
+
+        Parameters:
+            data_type (str): The database-specific data type to convert.
+
+        Returns:
+            str: The OData equivalent data type, or "Edm.String" if not found.
+        """
+        return self.json_data.get(data_type.lower(), "Edm.String")

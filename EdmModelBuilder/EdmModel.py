@@ -1,6 +1,12 @@
 # This file adheres to the "black" code formatting style.
 # More information about black: https://github.com/psf/black
-from primitives import primitives
+import math
+from typing import Optional, Union
+
+from EdmModel.EdmModel.odata_mapper import OdataConverter
+from EdmModel.EdmModel.primitives import primitives
+
+odataconverter = OdataConverter(database_client, "template.json")
 
 
 class ODataEdmBuilder:
@@ -29,18 +35,23 @@ class ODataEdmBuilder:
     def add_schema(
         self,
         schema_name: str,
-        alias: str = "",
+        alias: Optional[str] = "",
     ) -> dict:
         """
         Add a schema with the specified name to the ODataEdmBuilder object.
 
         Args:
             schema_name (str): The name of the schema.
-            alias (str, optional): An alias for the given schema.
+            alias (Optional[str]): An alias for the given schema.
 
         Returns:
             dict: The dictionary representing the added schema.
+
+        Raises:
+            ValueError: If schema_name is not of string type
         """
+        if not isinstance(schema_name, str):
+            raise ValueError(f"{schema_name} is not of type string")
         schema = {"Namespace": schema_name, "EntityTypes": [], "EntityContainers": []}
         if alias:
             schema["Alias"] = alias
@@ -55,11 +66,14 @@ class ODataEdmBuilder:
             schema_name (str): Name or Alias of schema to find
 
         Raises:
+            ValueError: If schema_name input is not of type str
             ValueError: If Name or Alias does not exist as schema in model
 
         Returns:
             schema: schema dictionary by Name or Alias
         """
+        if not isinstance(schema_name, str):
+            raise ValueError("Get schema by name expects a string input.")
         for schema in self.schemas:
             if schema["Namespace"] == schema_name:
                 return schema
@@ -71,7 +85,9 @@ class ODataEdmBuilder:
                     f"Schema with Name or Alias {schema_name} does not exist"
                 )
 
-    def add_entity_container(self, schema: dict | str, container_name: str) -> dict:
+    def add_entity_container(
+        self, schema: Union[dict, str], container_name: str
+    ) -> dict:
         """
         Add an entity container to the ODataEdmBuilder object within the specified schema.
 
@@ -81,7 +97,12 @@ class ODataEdmBuilder:
 
         Returns:
             dict: The dictionary representing the added entity container.
+
+        Raises:
+            ValueError: if schema input is not of dict or str type or container name is not of str type
         """
+        if not isinstance(schema, (dict, str)) or not isinstance(container_name, str):
+            raise ValueError("Input(s) not of correct type(s)")
         entity_container = {"Name": container_name, "EntitySets": []}
         if isinstance(schema, str):
             schema = self.get_schema_by_name(schema)
@@ -105,10 +126,22 @@ class ODataEdmBuilder:
         """
         entity_set = {"Name": entity_set_name, "EntityType": entity_type_name}
         entity_container["EntitySets"].append(entity_set)
+        entity_type = self.get_entity_type_by_name(self.schemas[0], entity_set_name)
+
+        if "NavigationProperties" in entity_type.keys():
+            navigation_property_bindings = []
+            for navigation_property in entity_type["NavigationProperties"]:
+                navigation_property_bindings.append(
+                    {
+                        "Path": navigation_property["Type"],
+                        "Target": navigation_property["Name"],
+                    }
+                )
+            entity_set["NavigationPropertyBinding"] = navigation_property_bindings
         return entity_set
 
     def get_entity_type_by_name(
-        self, schema: dict | str, entity_type_name: str
+        self, schema: Union[dict, str], entity_type_name: str
     ) -> dict:
         """
         Retrieve the entity type dictionary with the specified name from the given schema.
@@ -137,30 +170,26 @@ class ODataEdmBuilder:
 
     def add_entity_type(
         self,
-        schema: dict | str,
+        schema: Union[dict, str],
         entity_type_name: str,
-        base_type: str | dict = "",
-        summary: str = "",
-        long_description: str = "",
+        base_type: Optional[str | dict] = "",
+        summary: Optional[str] = "",
+        long_description: Optional[str] = "",
     ) -> dict:
         """
         Add an entity type with a specified name and base type to a schema.
 
         Args:
-            schema (dict): The schema to which the entity type will be added.
+            schema (dict | str): The schema to which the entity type will be added.
             entity_type_name (str): The name of the entity type.
-            base_type (str|dict, optional): The base type from which the entity type inherits (if any).
-            summary (str, optional): A summary for the entity type.
-            long_description (str, optional): A long description for the entity type.
+            base_type (Optional[str | dict]): The base type from which the entity type inherits (if any).
+            summary (Optional[str]): A summary for the entity type.
+            long_description (Optional[str]): A long description for the entity type.
 
         Returns:
             dict: The dictionary representing the added entity type.
         """
-        entity_type = {
-            "Name": entity_type_name,
-            "Properties": [],
-            "NavigationProperties": [],
-        }
+        entity_type = {"Name": entity_type_name, "Properties": []}
         if isinstance(schema, str):
             schema = self.get_schema_by_name(schema)
 
@@ -171,6 +200,7 @@ class ODataEdmBuilder:
                 raise ValueError(
                     "An entity type with a base type must not declare a key."
                 )
+            # check if base_type is a string or dict and add as base_type to entity_type
             entity_type["BaseType"] = (
                 base_type["Name"]
                 if isinstance(base_type, dict)
@@ -178,7 +208,6 @@ class ODataEdmBuilder:
             )
         else:
             entity_type["Keys"] = []
-
         # Documentation tag with Summary and LongDescription if added.
         documentation = {}
         if summary:
@@ -207,7 +236,7 @@ class ODataEdmBuilder:
             raise ValueError("An entity type with a base type must not declare a key.")
 
         # PropertyRef keys can only be of primitive types
-        if property_type in primitives:
+        if odataconverter.convert_to_odata(property_type) in primitives:
             entity_type["Keys"].append(property_name)
         else:
             raise ValueError(
@@ -219,7 +248,10 @@ class ODataEdmBuilder:
         entity_type: dict,
         property_name: str,
         property_type: str,
-        nullable: bool = True,
+        nullable: Optional[bool] = True,
+        max_length: Optional[Union[int, float]] = None,
+        precision: Optional[Union[int, float]] = None,
+        scale: Optional[Union[int, float]] = None,
     ) -> dict:
         """
         Add a property with a specified name, type, and nullable setting to an entity type.
@@ -228,17 +260,37 @@ class ODataEdmBuilder:
             entity_type (dict): The entity type to which the property will be added.
             property_name (str): The name of the property.
             property_type (str): The type of the property.
-            nullable (bool): Whether the property is nullable (defaults to True).
-
+            nullable (Optional[bool]): Whether the property is nullable (defaults to True).
+            max_length (Optional[int | float]): max_length when defined for a nvarchar or varchar
+            precision (Optional[int | float]): precision when defined for a numeric
+            scale (Optional[int | float]): scale when defined for a numeric
         Returns:
-        dict: The dictionary representing the added property
+            dict: The dictionary representing the added property
         """
-        prop = {"Name": property_name, "Type": property_type, "Nullable": nullable}
-        # because Key is added as a property as well, check if property_name is not already in existing properties
+        prop = {
+            "Name": property_name,
+            "Type": odataconverter.convert_to_odata(property_type),
+            "Nullable": nullable,
+        }
+        # if int or float or decimal and precsionm, scale is defined add it to property
+        if property_type in ["int", "float", "decimal"]:
+            if precision and not math.isnan(precision):
+                prop["Precision"] = int(precision)
+            if scale and not math.isnan(scale):
+                prop["Scale"] = int(scale)
+        # if varchar or nvarchar and max_length is defined add it to property
+        elif property_type in ["varchar", "nvarchar"]:
+            if max_length and not math.isnan(max_length) and not int(max_length) == -1:
+                prop["MaxLength"] = int(max_length)
+
+        # because Key is added as a property as well (see add_key)
+        # check if property_name is not already in existing properties
         existing_property_names = [prop["Name"] for prop in entity_type["Properties"]]
-        existing_navigation_property_names = [
-            prop["Name"] for prop in entity_type["NavigationProperties"]
-        ]
+        existing_navigation_property_names = []
+        if "NavigationProperties" in entity_type:
+            existing_navigation_property_names = [
+                prop["Name"] for prop in entity_type["NavigationProperties"]
+            ]
         if (
             property_name not in existing_property_names
             and property_name not in existing_navigation_property_names
@@ -298,16 +350,37 @@ class ODataEdmBuilder:
                 metadata += "\n"
 
                 for prop in entity_type["Properties"]:
-                    metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" />\n'.format(
-                        prop["Name"], prop["Type"], str(prop["Nullable"]).lower()
-                    )
-                if len(entity_type["NavigationProperties"]) > 0:
+                    if "MaxLength" in prop:
+                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" MaxLength="{3}"  />\n'.format(
+                            prop["Name"],
+                            prop["Type"],
+                            str(prop["Nullable"]).lower(),
+                            prop["MaxLength"],
+                        )
+                    elif "Precision" and "Scale" in prop:
+                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1} "Nullable="{2}" Precision="{3}" Scale="{4}"  />\n'.format(
+                            prop["Name"],
+                            prop["Type"],
+                            str(prop["Nullable"]).lower(),
+                            prop["Precision"],
+                            prop["Scale"],
+                        )
+                    else:
+                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" />\n'.format(
+                            prop["Name"], prop["Type"], str(prop["Nullable"]).lower()
+                        )
+                if "NavigationProperties" in entity_type:
                     for nav_prop in entity_type["NavigationProperties"]:
-                        metadata += '\t\t\t\t<NavigationProperty Name="{0}" Type="{1}" Nullable="{2}" />\n'.format(
+                        metadata += '\t\t\t\t<NavigationProperty Name="{0}" Type="Collection({1})" Partner="{2}" Nullable="{3}" >\n'.format(
                             nav_prop["Name"],
-                            schema["Namespace"] + "." + nav_prop["Type"],
+                            f'{nav_prop["Schema"]}.{nav_prop["Type"]}',
+                            nav_prop["Partner"],
                             str(nav_prop["Nullable"]).lower(),
                         )
+                        metadata += '\t\t\t\t\t<ReferentialConstraint Property="{0}" ReferencedProperty="{1}" />\n'.format(
+                            nav_prop["Property"], nav_prop["ReferencedProperty"]
+                        )
+                        metadata += "\t\t\t\t</NavigationProperty>\n"
                 metadata += "\t\t\t</EntityType>\n"
 
             for entity_container in schema["EntityContainers"]:
@@ -316,11 +389,24 @@ class ODataEdmBuilder:
                 )
 
                 for entity_set in entity_container["EntitySets"]:
-                    metadata += (
-                        '\t\t\t\t<EntitySet Name="{0}" EntityType="{1}" />\n'.format(
+                    if "NavigationPropertyBinding" in entity_set:
+                        metadata += (
+                            '\t\t\t\t<EntitySet Name="{0}" EntityType="{1}">\n'.format(
+                                entity_set["Name"], entity_set["EntityType"]
+                            )
+                        )
+                        for navigation_property_binding in entity_set[
+                            "NavigationPropertyBinding"
+                        ]:
+                            metadata += '\t\t\t\t\t<NavigationPropertyBinding Path="{0}" Target="{1}" />\n'.format(
+                                navigation_property_binding["Path"],
+                                navigation_property_binding["Target"],
+                            )
+                        metadata += "\t\t\t\t</EntitySet>\n"
+                    else:
+                        metadata += '\t\t\t\t<EntitySet Name="{0}" EntityType="{1}" />\n'.format(
                             entity_set["Name"], entity_set["EntityType"]
                         )
-                    )
 
                 metadata += "\t\t\t</EntityContainer>\n"
 
@@ -350,31 +436,34 @@ class ODataEdmBuilder:
                 "An entity type with no base type must contain at least one Property element."
             )
 
-    # def add_navigation_property(
-    #     self, entity_type: dict, name: str, type_attr: str, is_nullable: bool = True
-    # ):
-    #     for schema in self.schemas:
-    #         try:
-    #             type_attr = self.get_entity_type_by_name(schema, type_attr)
-    #         except:
-    #             continue
-    #     if type_attr == entity_type["Name"]:
-    #         raise ValueError("A NavigationProperty cannot point to itself.")
-
-    #     navigation_property = {
-    #         "Name": name,
-    #         "Type": type_attr["Name"],
-    #         "Nullable": is_nullable,
-    #     }
-    #     entity_type["NavigationProperties"].append(navigation_property)
-
-    # if is_collection:
-    #     navigation_property["Collection"] = "true"
-
-    # if partner_property_name:
-    #     navigation_property["Partner"] = partner_property_name
-
-    # if contains_target:
-    #     navigation_property["ContainsTarget"] = "true"
-
-    # entity_type["NavigationProperties"].append(navigation_property)
+    def add_navigation_property(
+        self,
+        entity_type: dict,
+        property_name: str,
+        target_entity: str,
+        is_nullable: Optional[bool] = True,
+    ):
+        for schema in self.schemas:
+            try:
+                target_entity = self.get_entity_type_by_name(schema, target_entity)
+            except:
+                continue
+        if target_entity["Name"] == entity_type["Name"]:
+            raise ValueError("A NavigationProperty cannot point to itself.")
+        # TO DO: Check if reference entity is a Collection;
+        # if its not a collection, a referential constraint is needed.
+        # referential constraints can also mean that column A with name ProductId
+        # references column B with name ID in table products.
+        navigation_property = {
+            "Schema": schema["Namespace"],
+            "Name": target_entity["Name"],
+            "Type": target_entity["Name"],
+            "Partner": entity_type["Name"],
+            "Nullable": is_nullable,
+            "Property": property_name,
+            "ReferencedProperty": property_name,
+        }
+        if "NavigationProperties" in entity_type:
+            entity_type["NavigationProperties"].append(navigation_property)
+        else:
+            entity_type["NavigationProperties"] = [navigation_property]
