@@ -11,9 +11,10 @@ from PyOdataEdmModel.odata_mapper import OdataConverter
 with open(os.path.join("PyOdataEdmModel", "config", "settings.json"), "r") as file:
     data = json.load(file)
 
-# Access the values
-database_client = data["database_client"]
-template_file = data["template_file"]
+with open(os.path.join("PyOdataEdmModel", "config", "template.json"), "r") as file2:
+    template_file = json.load(file2)
+
+database_client = data['database_client']
 
 OdataConverter = OdataConverter(template_file, database_client)
 

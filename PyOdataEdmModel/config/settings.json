@@ -1,4 +1,3 @@
 {
-    "database_client": "sqlserver",
-    "template_file": "PyOdataEdmModel/config/template.json"
+    "database_client": "sqlserver"
 }
