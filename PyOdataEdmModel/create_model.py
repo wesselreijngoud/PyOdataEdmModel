@@ -8,7 +8,7 @@ import os
 from PyOdataEdmModel.EdmModel import ODataEdmBuilder
 from PyOdataEdmModel.odata_mapper import OdataConverter
 
-with open(os.path.join("PyOdataEdmModel", "config", "settings.json", "r")) as file:
+with open(os.path.join("PyOdataEdmModel", "config", "settings.json"), "r") as file:
     data = json.load(file)
 
 # Access the values
