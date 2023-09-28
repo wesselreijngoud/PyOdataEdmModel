@@ -23,13 +23,17 @@ The class includes the following main features:
 - Constructing entity containers with entity sets.
 - Generating EDMX metadata document.
 
+## 1.1. Getting Started
+Odata data type mapping is different depending on the source, in the config/template.json file you can find the already defined Odata data type mappings available. In the config/settings.json you can change the source of your data to correctly get the mapping from the template file. If your data source is not yet present in the template file, add it manually as a dict in a dict. 
+
 ## Code Formatting
 
 This project follows the "black" code formatting style. "black" is an opinionated code formatter that automatically formats Python code to ensure consistent style and readability. To learn more about "black," visit the [official repository](https://github.com/psf/black).
 
 ## 2. Dependencies <a name="dependencies"></a>
+To install the needed dependencies please run:
+```pip install -r requirements.txt```
 
-The `ODataEdmBuilder` class has no external dependencies and can be used independently in Python projects.
 
 ## 3. Usage <a name="usage"></a>
 
