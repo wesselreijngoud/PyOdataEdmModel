@@ -17,16 +17,14 @@ def load_configuration():
     Returns:
         dict: A dictionary containing configuration data.
     """
-    settings_file_path = os.path.join("PyOdataEdmModel", "config", "settings.json")
-    template_file_path = os.path.join("PyOdataEdmModel", "config", "template.json")
+    # Get the path of the directory containing this module
+    module_dir = os.path.dirname(__file__)
+    settings_file_path = os.path.join(module_dir, "config", "settings.json")
+    template_file_path = os.path.join(module_dir, "config", "template.json")
 
     with open(settings_file_path, "r") as settings_file:
         settings_data = json.load(settings_file)
-
-    with open(template_file_path, "r") as template_file:
-        template_data = json.load(template_file)
-
-    return settings_data, template_data
+    return settings_data, template_file_path
 
 
 settings_data, template_data = load_configuration()
