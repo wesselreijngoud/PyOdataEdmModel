@@ -1,10 +1,11 @@
 # This file adheres to the "black" code formatting style.
 # More information about black: https://github.com/psf/black
 import json
+import os
 from collections import defaultdict
 
 import pandas as pd
-import os
+
 from PyOdataEdmModel.EdmModel import ODataEdmBuilder
 from PyOdataEdmModel.odata_mapper import OdataConverter
 
