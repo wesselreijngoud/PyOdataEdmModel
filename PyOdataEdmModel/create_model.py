@@ -8,15 +8,29 @@ import os
 from PyOdataEdmModel.EdmModel import ODataEdmBuilder
 from PyOdataEdmModel.odata_mapper import OdataConverter
 
-with open(os.path.join("PyOdataEdmModel", "config", "settings.json"), "r") as file:
-    data = json.load(file)
 
-with open(os.path.join("PyOdataEdmModel", "config", "template.json"), "r") as file2:
-    template_file = json.load(file2)
+def load_configuration():
+    """
+    Load configuration data from settings.json and template.json files.
 
-database_client = data["database_client"]
+    Returns:
+        dict: A dictionary containing configuration data.
+    """
+    settings_file_path = os.path.join("PyOdataEdmModel", "config", "settings.json")
+    template_file_path = os.path.join("PyOdataEdmModel", "config", "template.json")
 
-OdataConverter = OdataConverter(template_file, database_client)
+    with open(settings_file_path, "r") as settings_file:
+        settings_data = json.load(settings_file)
+
+    with open(template_file_path, "r") as template_file:
+        template_data = json.load(template_file)
+
+    return settings_data, template_data
+
+
+settings_data, template_data = load_configuration()
+database_client = settings_data["database_client"]
+OdataConverter = OdataConverter(template_data, database_client)
 
 
 def create_model_from_table_info(
