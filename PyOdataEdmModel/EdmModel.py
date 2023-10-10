@@ -352,14 +352,14 @@ class ODataEdmBuilder:
 
                 for prop in entity_type["Properties"]:
                     if "MaxLength" in prop:
-                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" MaxLength="{3}"  />\n'.format(
+                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" MaxLength="{3}" />\n'.format(
                             prop["Name"],
                             prop["Type"],
                             str(prop["Nullable"]).lower(),
                             prop["MaxLength"],
                         )
                     elif "Precision" and "Scale" in prop:
-                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1} "Nullable="{2}" Precision="{3}" Scale="{4}"  />\n'.format(
+                        metadata += '\t\t\t\t<Property Name="{0}" Type="{1}" Nullable="{2}" Precision="{3}" Scale="{4}" />\n'.format(
                             prop["Name"],
                             prop["Type"],
                             str(prop["Nullable"]).lower(),
@@ -441,15 +441,18 @@ class ODataEdmBuilder:
         self,
         entity_type: dict,
         property_name: str,
-        target_entity: str,
+        referenced_col: str,
+        referenced_entity: str,
         is_nullable: Optional[bool] = True,
     ):
         for schema in self.schemas:
             try:
-                target_entity = self.get_entity_type_by_name(schema, target_entity)
+                referenced_entity = self.get_entity_type_by_name(
+                    schema, referenced_entity
+                )
             except:
                 continue
-        if target_entity["Name"] == entity_type["Name"]:
+        if referenced_entity["Name"] == entity_type["Name"]:
             raise ValueError("A NavigationProperty cannot point to itself.")
         # TO DO: Check if reference entity is a Collection;
         # if its not a collection, a referential constraint is needed.
@@ -457,12 +460,12 @@ class ODataEdmBuilder:
         # references column B with name ID in table products.
         navigation_property = {
             "Schema": schema["Namespace"],
-            "Name": target_entity["Name"],
-            "Type": target_entity["Name"],
+            "Name": referenced_entity["Name"],
+            "Type": referenced_entity["Name"],
             "Partner": entity_type["Name"],
             "Nullable": is_nullable,
             "Property": property_name,
-            "ReferencedProperty": property_name,
+            "ReferencedProperty": referenced_col,
         }
         if "NavigationProperties" in entity_type:
             entity_type["NavigationProperties"].append(navigation_property)

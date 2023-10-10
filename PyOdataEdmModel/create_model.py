@@ -152,9 +152,9 @@ def create_edm_model_from_sql_result(
                 scale,
             )
         )
-        return create_model_from_table_info(
-            builder, schema, container, namespace_name, table_info
-        )
+    return create_model_from_table_info(
+        builder, schema, container, namespace_name, table_info
+    )
 
 
 def create_edm_model_from_df_result(
