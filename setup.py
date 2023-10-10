@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="PyOdataEdmModel",
-    version="1.0.2",
+    version="1.0.3",
     author="Wessel Reijngoud",
     author_email="wreijngoud@ilionx.com",
     keywords="odata edmmodel metadata",
