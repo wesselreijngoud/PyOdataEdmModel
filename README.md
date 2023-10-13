@@ -150,4 +150,4 @@ print(metadata)
 ```
 
 ## License
-This project is licensed under the GNU 3 License. See the LICENSE file for details.
+This project is licensed under the GNU 3 License. See the [LICENSE](LICENSE) file for details.
