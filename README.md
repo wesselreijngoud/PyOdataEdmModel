@@ -37,7 +37,36 @@ To install the needed dependencies please run:
 
 ## 3. Usage <a name="usage"></a>
 
-To use the `ODataEdmBuilder` class, follow these steps:
+### Configuration Files
+
+Ensure that the following configuration files are present in the `config` directory:
+
+1. **settings.json**: Contains database client information and other configuration settings.
+2. **template.json**: Contains template information for EDM model generation.
+
+### Running the Script
+
+To create a EdmModel from either a SQL (json) result or a Dataframe result follow these steps:
+
+### `load_configuration()`
+
+This function loads configuration data from `settings.json` and `template.json` files and returns it as a dictionary.
+
+### `create_model_from_table_info(builder, schema, container, namespace_name, table_info)`
+
+This function creates an OData EDM model from a dictionary containing metadata information. It takes an EDM builder instance, schema, container, namespace name, and table information as input, and returns an instance of `ODataEdmBuilder` containing the generated EDM model.
+
+### `create_edm_model_from_sql_result(namespace_name, service_name, schema_name, container_name, json_result)`
+
+This function generates an EDM model based on SQL query results provided in JSON format. It takes namespace name, service name, schema name, container name, and JSON result as input. The function utilizes the `ODataEdmBuilder` class from `EdmModel.py` to create the EDM model. It maps SQL query results to EDM entities and properties, generating a comprehensive EDM model representation.
+
+### `create_edm_model_from_df_result(namespace_name, service_name, schema_name, container_name, df)`
+
+This function generates an EDM model based on a pandas DataFrame. It takes namespace name, service name, schema name, container name, and a pandas DataFrame as input. Similar to the SQL result function, it utilizes the `ODataEdmBuilder` class from `EdmModel.py` to create the EDM model. The function maps DataFrame columns to EDM properties, creating the necessary entity types and sets within the EDM model.
+
+
+
+## 3.1 To use the `ODataEdmBuilder` class, follow these steps:
 
 1. Create an instance of the `ODataEdmBuilder` by providing the `namespace` and `service_name` parameters.
 
