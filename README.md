@@ -46,15 +46,7 @@ Ensure that the following configuration files are present in the `config` direct
 
 ### Running the Script
 
-To create a EdmModel from either a SQL (json) result or a Dataframe result follow these steps:
-
-### `load_configuration()`
-
-This function loads configuration data from `settings.json` and `template.json` files and returns it as a dictionary.
-
-### `create_model_from_table_info(builder, schema, container, namespace_name, table_info)`
-
-This function creates an OData EDM model from a dictionary containing metadata information. It takes an EDM builder instance, schema, container, namespace name, and table information as input, and returns an instance of `ODataEdmBuilder` containing the generated EDM model.
+To create a EdmModel from either a SQL (json) result or a Dataframe result follow either of these two options:
 
 ### `create_edm_model_from_sql_result(namespace_name, service_name, schema_name, container_name, json_result)`
 
