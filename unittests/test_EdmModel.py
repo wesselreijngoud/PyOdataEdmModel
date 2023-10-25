@@ -1,15 +1,11 @@
 import unittest
-from EdmModelBuilder.EdmModel import ODataEdmBuilder
+from PyOdataEdmModel.EdmModel import ODataEdmBuilder
 
 
 class TestODataEdmBuilder(unittest.TestCase):
     def setUp(self):
         # Create an instance of ODataEdmBuilder for testing
         self.builder = ODataEdmBuilder("TestNamespace", "TestService")
-
-    def tearDown(self):
-        # Clean up resources after each test (if needed)
-        pass
 
     def test_add_schema(self):
         schema = self.builder.add_schema("Schema1")
@@ -28,7 +24,11 @@ class TestODataEdmBuilder(unittest.TestCase):
     def test_add_entity_set(self):
         schema = self.builder.add_schema("Schema1")
         container = self.builder.add_entity_container(schema, "Container1")
-        entity_set = self.builder.add_entity_set(container, "EntitySet1", "EntityType1")
+        # entity type should be added before entity set
+        entity_type = self.builder.add_entity_type(schema, "EntityType1")
+        entity_set = self.builder.add_entity_set(
+            schema, container, "EntitySet1", "EntityType1"
+        )
         self.assertEqual(entity_set["Name"], "EntitySet1")
         self.assertEqual(entity_set["EntityType"], "EntityType1")
 
@@ -64,7 +64,10 @@ class TestODataEdmBuilder(unittest.TestCase):
         metadata = self.builder.generate_metadata()
         self.assertIn('<Schema Namespace="Schema1"', metadata)
         self.assertIn('<EntityType Name="EntityType1"', metadata)
-        self.assertIn('<Property Name="PropertyName" Type="Edm.String" Nullable="true" />', metadata)
+        self.assertIn(
+            '<Property Name="PropertyName" Type="Edm.String" Nullable="true" />',
+            metadata,
+        )
 
     def test_validate_entity_type(self):
         schema = self.builder.add_schema("Schema1")
@@ -75,10 +78,24 @@ class TestODataEdmBuilder(unittest.TestCase):
         self.builder.add_property(entity_type, "PropertyName", "Edm.String")
         self.builder.validate_entity_type(entity_type)
         # breaks rule that you cant add a base_type and a key to same entity
-        entity_type2 = self.builder.add_entity_type(schema, "EntityType2", base_type="EntityType1")
-        self.assertRaises(ValueError, self.builder.add_key, entity_type2, "PropertyName1", "Edm.String")
+        entity_type2 = self.builder.add_entity_type(
+            schema, "EntityType2", base_type="EntityType1"
+        )
+        self.assertRaises(
+            ValueError,
+            self.builder.add_key,
+            entity_type2,
+            "PropertyName1",
+            "Edm.String",
+        )
         # breaks rule that you can add base_type of itself
-        self.assertRaises(KeyError, self.builder.add_entity_type, schema, "EntityType4", base_type="EntityType4")
+        self.assertRaises(
+            KeyError,
+            self.builder.add_entity_type,
+            schema,
+            "EntityType4",
+            base_type="EntityType4",
+        )
 
 
 if __name__ == "__main__":
