@@ -108,7 +108,7 @@ class ODataEdmBuilder:
         return entity_container
 
     def add_entity_set(
-        self, entity_container: dict, entity_set_name: str, entity_type_name: str
+        self, schema: Union[dict, str], entity_container: dict, entity_set_name: str, entity_type_name: str
     ) -> dict:
         """
         Add an entity set with a specified name and associated entity type to an entity container.
@@ -121,9 +121,11 @@ class ODataEdmBuilder:
         Returns:
             dict: The dictionary representing the added entity set.
         """
+        if isinstance(schema, str):
+            schema = self.get_schema_by_name(schema)
         entity_set = {"Name": entity_set_name, "EntityType": entity_type_name}
         entity_container["EntitySets"].append(entity_set)
-        entity_type = self.get_entity_type_by_name(self.schemas[0], entity_set_name)
+        entity_type = self.get_entity_type_by_name(schema, entity_type_name)
 
         if "NavigationProperties" in entity_type.keys():
             navigation_property_bindings = []
@@ -159,11 +161,10 @@ class ODataEdmBuilder:
         for entity_type in schema["EntityTypes"]:
             if entity_type["Name"] == entity_type_name:
                 return entity_type
-
-        raise KeyError(
-            f"""Entity type '{entity_type_name}' not found in the given schema.
-            Note: An entity type cannot introduce an inheritance cycle via the base type attribute."""
-        )
+            else:
+                raise KeyError(
+                    f"""Entity type '{entity_type_name}' not found in the given schema."""
+                )
 
     def add_entity_type(
         self,
