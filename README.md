@@ -105,10 +105,10 @@ Adds an entity container with the given `container_name` to the `ODataEdmBuilder
 ### 4.4 Entity Set Methods
 
 ```python
-def add_entity_set(self, entity_container: dict, entity_set_name: str, entity_type_name: str) -> dict
+def add_entity_set(self, schema: Uniont[dict, str], entity_container: dict, entity_set_name: str, entity_type_name: str) -> dict
 ```
 
-Adds an entity set with the given `entity_set_name` and `entity_type_name` to the specified `entity_container` in the `ODataEdmBuilder` object.
+Adds an entity set with the given `entity_set_name` and `entity_type_name` to the specified `entity_container` in the `schema` in the `ODataEdmBuilder` object.
 
 ### 4.5 Entity Type Methods
 
