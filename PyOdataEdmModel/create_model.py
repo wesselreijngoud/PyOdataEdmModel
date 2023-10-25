@@ -84,7 +84,7 @@ def create_model_from_table_info(
                 precision,
                 scale,
             )
-        builder.add_entity_set(container, table, f"{namespace_name}.{table}")
+        builder.add_entity_set(schema, container, table, f"{namespace_name}.{table}")
         builder.validate_entity_type(entity_type)
 
     builder.generate_metadata()
