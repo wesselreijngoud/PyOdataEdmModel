@@ -5,14 +5,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="PyOdataEdmModel",
-    version="1.0.4",
+    version="1.0.5",
     author="Wessel Reijngoud",
     author_email="wreijngoud@ilionx.com",
     keywords="odata edmmodel metadata",
     description="The ODataEdmBuilder is a Python class that facilitates the construction of an Entity Data Model (EDM) for OData services.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=find_packages(),
+    packages=find_packages(exclude=["unittests*"]),
     data_files=[
         (
             "config",
